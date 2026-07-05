@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Env / secrets — nunca commitar credenciais
+.env
+*.env.local
+appsettings.*.local.json
+
+# OS
+.DS_Store
+Thumbs.db
