@@ -1,0 +1,59 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "JSONPlaceholder (demo — synthetic public API)",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "https://jsonplaceholder.typicode.com" }],
+  "paths": {
+    "/posts": {
+      "get": {
+        "operationId": "listPosts",
+        "summary": "List posts, optionally filtered by userId.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "description": "Filter posts by author id.",
+            "schema": { "type": "integer" }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createPost",
+        "summary": "Create a post (MUTATING — disabled unless the policy allows it).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "body": { "type": "string" },
+                  "userId": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{id}": {
+      "get": {
+        "operationId": "getPost",
+        "summary": "Fetch a single post by id.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The post id.",
+            "schema": { "type": "integer" }
+          }
+        ]
+      }
+    }
+  }
+}

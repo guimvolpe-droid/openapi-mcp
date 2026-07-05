@@ -1,0 +1,11 @@
+{
+  "openApiPath": "jsonplaceholder.openapi.json",
+  "baseUrl": "https://jsonplaceholder.typicode.com",
+  "policy": {
+    "allowMutating": false,
+    "allowedOperations": ["*"]
+  },
+  "auth": {
+    "type": "none"
+  }
+}
