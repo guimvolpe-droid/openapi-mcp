@@ -39,8 +39,8 @@ Honest, incremental build. What runs today vs. what's next:
 | Resilient HTTP dispatch (retries / timeout / circuit-breaker) + path/query/header/body mapping | ✅ working |
 | Pluggable auth (API key · bearer) injected server-side, kept out of the agent | ✅ working |
 | Runs without ICU (`InvariantGlobalization`) · Dockerfile · GitHub Actions CI | ✅ |
+| Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ working |
 | OAuth2 client-credentials auth flow | 🔜 next |
-| Streamable HTTP transport (remote, multi-client) | 🔜 next |
 | Richer response shaping / pagination helpers | 🔜 next |
 | Screen recording (Loom) + a bundled synthetic demo API | 🔜 next |
 
@@ -66,6 +66,21 @@ You will see, over MCP:
    post JSON.
 3. `tools/call createPost {...}` is rejected — `Unknown or disallowed tool` — because the gate never
    exposed it.
+
+### Streamable HTTP mode (remote clients, e.g. an orchestration hub)
+
+Same catalog, policy gate and invoker — served over HTTP instead of stdio:
+
+```bash
+OPENAPI_MCP_HTTP=1 OPENAPI_MCP_HTTP_PORT=8410 \
+OPENAPI_MCP_HTTP_TOKEN="$(openssl rand -base64 32)" \
+dotnet run --project src/OpenApiMcp.Server
+# → POST http://127.0.0.1:8410/mcp  (JSON-RPC: initialize / tools/list / tools/call)
+```
+
+Security posture: binds to **127.0.0.1 only** (exposing it further is an explicit deploy decision —
+tunnel/reverse-proxy with TLS); Bearer auth is **fail-closed** (`OPENAPI_MCP_HTTP_TOKEN` unset ⇒ every
+request answers 503; wrong token ⇒ 401; constant-time comparison over SHA-256 digests).
 
 Run the tests:
 
