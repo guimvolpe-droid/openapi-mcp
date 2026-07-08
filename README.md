@@ -39,7 +39,7 @@ Honest, incremental build. What runs today vs. what's next:
 | Resilient HTTP dispatch (retries / timeout / circuit-breaker) + path/query/header/body mapping | ✅ working |
 | Pluggable auth (API key · bearer) injected server-side, kept out of the agent | ✅ working |
 | Runs without ICU (`InvariantGlobalization`) · Dockerfile · GitHub Actions CI | ✅ |
-| Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ working |
+| Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ integration-tested with the SDK's real client ([ADR 0002](docs/adr/0002-dual-transport.md)) |
 | Bundled synthetic demo API — the whole E2E flow runs offline | ✅ tested |
 | OAuth2 client-credentials auth flow | 🔜 next |
 | Richer response shaping / pagination helpers | 🔜 next |
@@ -108,6 +108,18 @@ dotnet test
 ```bash
 docker build -t openapi-mcp .
 docker run -i --rm openapi-mcp   # speaks MCP over stdio
+```
+
+Or run the full containerized demo — synthetic upstream + MCP server in Streamable HTTP mode
+(published to the host's loopback only):
+
+```bash
+export OPENAPI_MCP_HTTP_TOKEN="$(openssl rand -base64 32)"
+docker compose up --build -d
+curl -sN -X POST http://127.0.0.1:8410/mcp \
+  -H "authorization: Bearer $OPENAPI_MCP_HTTP_TOKEN" \
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
 ```
 
 ### Wire it to Claude Desktop (or any MCP client)

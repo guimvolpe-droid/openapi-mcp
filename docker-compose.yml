@@ -1,0 +1,29 @@
+# Demo completo em containers: upstream sintético + servidor MCP em modo Streamable HTTP.
+#
+#   export OPENAPI_MCP_HTTP_TOKEN="$(openssl rand -base64 32)"
+#   docker compose up --build -d
+#   curl -sN -X POST http://127.0.0.1:8410/mcp \
+#     -H "authorization: Bearer $OPENAPI_MCP_HTTP_TOKEN" \
+#     -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+#     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
+#
+services:
+  demoapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.demoapi
+
+  mcp:
+    build:
+      context: .
+    environment:
+      OPENAPI_MCP_HTTP: "1"
+      # Dentro do container o bind precisa ser 0.0.0.0; a exposição ao host segue só em
+      # loopback via port-publish 127.0.0.1 — mesma postura de segurança do default.
+      OPENAPI_MCP_HTTP_URL: http://0.0.0.0:8410
+      OPENAPI_MCP_HTTP_TOKEN: ${OPENAPI_MCP_HTTP_TOKEN:?export OPENAPI_MCP_HTTP_TOKEN first (fail-closed sem token)}
+      OPENAPI_MCP_CONFIG: /app/demo/config.compose.json
+    ports:
+      - "127.0.0.1:8410:8410"
+    depends_on:
+      - demoapi
