@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Mesma postura do servidor: roda sem libicu. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Zero PackageReference: só o shared framework — builda e roda offline. -->
+  </PropertyGroup>
+
+</Project>

@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D2B77E44
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenApiMcp.Tests", "tests\OpenApiMcp.Tests\OpenApiMcp.Tests.csproj", "{C147965D-39F5-4BA9-A40B-935880F8140A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenApiMcp.DemoApi", "src\OpenApiMcp.DemoApi\OpenApiMcp.DemoApi.csproj", "{1DBAD0F3-7107-4BD6-9092-DB043DD72953}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,9 +30,14 @@ Global
 		{C147965D-39F5-4BA9-A40B-935880F8140A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C147965D-39F5-4BA9-A40B-935880F8140A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C147965D-39F5-4BA9-A40B-935880F8140A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DBAD0F3-7107-4BD6-9092-DB043DD72953}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DBAD0F3-7107-4BD6-9092-DB043DD72953}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DBAD0F3-7107-4BD6-9092-DB043DD72953}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DBAD0F3-7107-4BD6-9092-DB043DD72953}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{99EA37A6-DF8B-441F-B9CF-A79FE7835591} = {203759D9-EB78-4FB2-A386-63D8AAE8B7DB}
 		{C147965D-39F5-4BA9-A40B-935880F8140A} = {D2B77E44-AE4E-4FAD-896C-A57401241066}
+		{1DBAD0F3-7107-4BD6-9092-DB043DD72953} = {203759D9-EB78-4FB2-A386-63D8AAE8B7DB}
 	EndGlobalSection
 EndGlobal

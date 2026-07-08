@@ -40,9 +40,10 @@ Honest, incremental build. What runs today vs. what's next:
 | Pluggable auth (API key · bearer) injected server-side, kept out of the agent | ✅ working |
 | Runs without ICU (`InvariantGlobalization`) · Dockerfile · GitHub Actions CI | ✅ |
 | Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ working |
+| Bundled synthetic demo API — the whole E2E flow runs offline | ✅ tested |
 | OAuth2 client-credentials auth flow | 🔜 next |
 | Richer response shaping / pagination helpers | 🔜 next |
-| Screen recording (Loom) + a bundled synthetic demo API | 🔜 next |
+| Screen recording (Loom) | 🔜 next |
 
 Every demo uses **synthetic / public data** and the README shows real HTTP status and error paths
 (including the "where it fails" cases), not a perfect-agent story.
@@ -66,6 +67,20 @@ You will see, over MCP:
    post JSON.
 3. `tools/call createPost {...}` is rejected — `Unknown or disallowed tool` — because the gate never
    exposed it.
+
+### Run it fully offline (bundled synthetic API)
+
+No network? The repo bundles its own upstream — `OpenApiMcp.DemoApi`, a zero-dependency minimal API
+with a deterministic seed (25 posts), userId filtering and `Link rel="next"` pagination:
+
+```bash
+ASPNETCORE_URLS=http://localhost:5088 dotnet run --project src/OpenApiMcp.DemoApi &   # the upstream
+OPENAPI_MCP_CONFIG=$PWD/src/OpenApiMcp.Server/demo/config.local.json \
+  bash -c '{ cat scripts/smoke.jsonl; sleep 3; } | dotnet src/OpenApiMcp.Server/bin/Debug/net8.0/OpenApiMcp.Server.dll 2>/dev/null'
+```
+
+Same three outcomes as above — policy gate, real HTTP 200, blocked mutation — with zero external
+dependencies. (Port taken? Change `ASPNETCORE_URLS` and `baseUrl` in `demo/config.local.json`.)
 
 ### Streamable HTTP mode (remote clients, e.g. an orchestration hub)
 

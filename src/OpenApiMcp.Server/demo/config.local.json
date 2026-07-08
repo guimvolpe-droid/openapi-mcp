@@ -1,0 +1,11 @@
+{
+  "openApiPath": "demoapi.openapi.json",
+  "baseUrl": "http://localhost:5088",
+  "policy": {
+    "allowMutating": false,
+    "allowedOperations": ["*"]
+  },
+  "auth": {
+    "type": "none"
+  }
+}

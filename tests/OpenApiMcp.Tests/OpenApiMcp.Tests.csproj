@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\OpenApiMcp.Server\OpenApiMcp.Server.csproj" />
+    <ProjectReference Include="..\..\src\OpenApiMcp.DemoApi\OpenApiMcp.DemoApi.csproj" />
   </ItemGroup>
 
 </Project>
