@@ -41,7 +41,7 @@ Honest, incremental build. What runs today vs. what's next:
 | Runs without ICU (`InvariantGlobalization`) · Dockerfile · GitHub Actions CI | ✅ |
 | Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ integration-tested with the SDK's real client ([ADR 0002](docs/adr/0002-dual-transport.md)) |
 | Bundled synthetic demo API — the whole E2E flow runs offline | ✅ tested |
-| OAuth2 client-credentials auth flow | 🔜 next |
+| OAuth2 client-credentials — token acquired/cached server-side, never seen by the agent | ✅ tested ([ADR 0003](docs/adr/0003-oauth2-client-credentials.md)) |
 | Richer response shaping / pagination helpers | 🔜 next |
 | Screen recording (Loom) | 🔜 next |
 
@@ -158,8 +158,20 @@ default). `openApiPath` is resolved relative to the config file.
 
 - **`policy.allowedOperations`** — operation ids (or `"*"` for all). Combined with `allowMutating`, this is
   your security policy: only what you list, read-only unless you say otherwise.
-- **`auth.type`** — `none` · `apiKey` (with `headerName`) · `bearer`. `value` may reference an environment
-  variable as `${VAR_NAME}` so secrets stay out of the config file and out of the agent.
+- **`auth.type`** — `none` · `apiKey` (with `headerName`) · `bearer` · `oauth2`. Any credential field may
+  reference an environment variable as `${VAR_NAME}` so secrets stay out of the config file and out of the
+  agent.
+- **`auth.type: "oauth2"`** (client-credentials) — add `tokenUrl`, `clientId`, `clientSecret` and optional
+  `scope`. The server mints and caches the access token (expiry-aware, 30s skew) and attaches it as a
+  Bearer header server-side; the model never sees the flow. Try it offline against the bundled demo:
+
+  ```bash
+  DEMO_API_REQUIRE_AUTH=1 ASPNETCORE_URLS=http://localhost:5088 dotnet run --project src/OpenApiMcp.DemoApi &
+  DEMO_CLIENT_SECRET=demo-secret OPENAPI_MCP_CONFIG=$PWD/src/OpenApiMcp.Server/demo/config.oauth.json \
+    bash -c '{ cat scripts/smoke.jsonl; sleep 3; } | dotnet src/OpenApiMcp.Server/bin/Debug/net8.0/OpenApiMcp.Server.dll 2>/dev/null'
+  # getPost → HTTP 200 (token minted silently, server-side). Run with demo/config.local.json instead
+  # of the oauth config and the upstream answers HTTP 401 — the "where it fails" case, honest and visible.
+  ```
 
 ## Architecture
 

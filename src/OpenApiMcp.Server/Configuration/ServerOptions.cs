@@ -30,7 +30,7 @@ public sealed class PolicyOptions
 /// <summary>Auth injetada na requisição de saída — nunca exposta ao agente.</summary>
 public sealed class AuthOptions
 {
-    /// <summary>none | apiKey | bearer</summary>
+    /// <summary>none | apiKey | bearer | oauth2 (client-credentials)</summary>
     public string Type { get; set; } = "none";
 
     /// <summary>Nome do header (para apiKey).</summary>
@@ -39,13 +39,28 @@ public sealed class AuthOptions
     /// <summary>Valor literal ou referência a env var no formato ${NOME}.</summary>
     public string? Value { get; set; }
 
-    public string? ResolveValue()
+    /// <summary>oauth2: endpoint de token (grant client_credentials, form-urlencoded).</summary>
+    public string? TokenUrl { get; set; }
+
+    /// <summary>oauth2: client id (aceita ${ENV}).</summary>
+    public string? ClientId { get; set; }
+
+    /// <summary>oauth2: client secret (aceita ${ENV} — mantenha fora do arquivo).</summary>
+    public string? ClientSecret { get; set; }
+
+    /// <summary>oauth2: scope opcional.</summary>
+    public string? Scope { get; set; }
+
+    /// <summary>Resolve referências ${ENV} em qualquer campo de credencial.</summary>
+    public static string? Resolve(string? value)
     {
-        if (string.IsNullOrEmpty(Value)) return Value;
-        if (Value.StartsWith("${") && Value.EndsWith("}"))
-            return Environment.GetEnvironmentVariable(Value[2..^1]);
-        return Value;
+        if (string.IsNullOrEmpty(value)) return value;
+        if (value.StartsWith("${") && value.EndsWith("}"))
+            return Environment.GetEnvironmentVariable(value[2..^1]);
+        return value;
     }
+
+    public string? ResolveValue() => Resolve(Value);
 
     public void Apply(HttpRequestMessage request)
     {

@@ -1,0 +1,14 @@
+{
+  "openApiPath": "demoapi.openapi.json",
+  "baseUrl": "http://localhost:5088",
+  "policy": {
+    "allowMutating": false,
+    "allowedOperations": ["*"]
+  },
+  "auth": {
+    "type": "oauth2",
+    "tokenUrl": "http://localhost:5088/oauth/token",
+    "clientId": "demo-client",
+    "clientSecret": "${DEMO_CLIENT_SECRET}"
+  }
+}

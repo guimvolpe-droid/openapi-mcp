@@ -13,11 +13,13 @@ public sealed class ApiToolInvoker
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly ServerOptions _options;
+    private readonly IAuthApplier _auth;
 
-    public ApiToolInvoker(IHttpClientFactory httpFactory, ServerOptions options)
+    public ApiToolInvoker(IHttpClientFactory httpFactory, ServerOptions options, IAuthApplier auth)
     {
         _httpFactory = httpFactory;
         _options = options;
+        _auth = auth;
     }
 
     public async Task<string> InvokeAsync(
@@ -57,8 +59,8 @@ public sealed class ApiToolInvoker
         if (tool.HasBody && args is not null && args.TryGetValue("body", out var body))
             request.Content = new StringContent(body.GetRawText(), Encoding.UTF8, "application/json");
 
-        // auth de saída — nunca chega ao agente
-        _options.Auth.Apply(request);
+        // auth de saída — nunca chega ao agente (oauth2 busca/renova token aqui, server-side)
+        await _auth.ApplyAsync(request, ct);
 
         var client = _httpFactory.CreateClient("api");
         using var response = await client.SendAsync(request, ct);

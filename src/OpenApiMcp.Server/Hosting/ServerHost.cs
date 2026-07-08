@@ -25,9 +25,7 @@ public static class ServerHost
         var builder = Host.CreateApplicationBuilder();
         builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
 
-        builder.Services.AddSingleton(options);
-        builder.Services.AddHttpClient("api").AddStandardResilienceHandler();
-        builder.Services.AddSingleton<ApiToolInvoker>();
+        AddCoreServices(builder.Services, options);
 
         var catalog = BuildCatalog(options);
         ApiToolInvoker invoker = null!;
@@ -48,9 +46,7 @@ public static class ServerHost
         var web = WebApplication.CreateBuilder();
         web.WebHost.UseUrls(url);
 
-        web.Services.AddSingleton(options);
-        web.Services.AddHttpClient("api").AddStandardResilienceHandler();
-        web.Services.AddSingleton<ApiToolInvoker>();
+        AddCoreServices(web.Services, options);
 
         var catalog = BuildCatalog(options);
         ApiToolInvoker invoker = null!;
@@ -82,6 +78,21 @@ public static class ServerHost
 
         app.MapMcp("/mcp");
         return app;
+    }
+
+    /// <summary>Serviços comuns aos dois transportes: HTTP resiliente, auth applier e invoker.</summary>
+    static void AddCoreServices(IServiceCollection services, ServerOptions options)
+    {
+        services.AddSingleton(options);
+        services.AddHttpClient("api").AddStandardResilienceHandler();
+        // Cliente separado para o token endpoint: fora do pipeline de resiliência da API alvo.
+        services.AddHttpClient("auth");
+        services.AddSingleton<IAuthApplier>(sp =>
+            string.Equals(options.Auth.Type, "oauth2", StringComparison.OrdinalIgnoreCase)
+                ? new OAuth2AuthApplier(new OAuth2TokenProvider(
+                    sp.GetRequiredService<IHttpClientFactory>().CreateClient("auth"), options.Auth))
+                : new StaticAuthApplier(options.Auth));
+        services.AddSingleton<ApiToolInvoker>();
     }
 
     /// <summary>OpenAPI → tools MCP, já sob o policy gate (allowlist + verbos mutantes off por padrão).</summary>

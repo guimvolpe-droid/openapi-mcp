@@ -8,16 +8,58 @@ public sealed record Post(int Id, int UserId, string Title, string Body);
 /// <summary>
 /// Fábrica da app de demo: usada pelo Program (porta do ASPNETCORE_URLS) e pelos testes
 /// (porta 0 in-process). Seed determinístico — mesmas respostas em qualquer máquina.
+/// Com auth ligada (param ou DEMO_API_REQUIRE_AUTH=1), /posts exige Bearer emitido pelo
+/// /oauth/token fake (client_credentials) — o upstream de teste do fluxo OAuth2 do servidor.
 /// </summary>
 public static class DemoApp
 {
     public const int SeedCount = 25;
+    public const string DefaultClientSecret = "demo-secret";
 
-    public static WebApplication Build(string[]? args = null)
+    public static WebApplication Build(string[]? args = null, bool? requireAuth = null, string? clientSecret = null)
     {
+        var authOn = requireAuth
+            ?? Environment.GetEnvironmentVariable("DEMO_API_REQUIRE_AUTH") == "1";
+        var secret = clientSecret
+            ?? Environment.GetEnvironmentVariable("DEMO_CLIENT_SECRET")
+            ?? DefaultClientSecret;
+
         var builder = WebApplication.CreateBuilder(args ?? Array.Empty<string>());
         var app = builder.Build();
         var posts = Seed();
+
+        // Token endpoint fake (grant client_credentials, form-urlencoded). Tokens emitidos ficam
+        // em memória; expiração curta o bastante para demos, sem relógio de verdade no caminho.
+        var issued = new HashSet<string>();
+        app.MapPost("/oauth/token", async (HttpContext ctx) =>
+        {
+            var form = await ctx.Request.ReadFormAsync();
+            if (form["grant_type"] != "client_credentials" || form["client_secret"] != secret)
+                return Results.Json(new { error = "invalid_client" }, statusCode: StatusCodes.Status401Unauthorized);
+
+            var token = $"demo-{Guid.NewGuid():N}";
+            lock (issued) issued.Add(token);
+            return Results.Ok(new { access_token = token, token_type = "Bearer", expires_in = 3600 });
+        });
+
+        if (authOn)
+        {
+            app.Use(async (ctx, next) =>
+            {
+                if (ctx.Request.Path.StartsWithSegments("/oauth")) { await next(); return; }
+                var header = ctx.Request.Headers.Authorization.ToString();
+                var token = header.StartsWith("Bearer ", StringComparison.Ordinal) ? header["Bearer ".Length..] : "";
+                bool ok;
+                lock (issued) ok = issued.Contains(token);
+                if (!ok)
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await ctx.Response.WriteAsJsonAsync(new { error = "unauthorized" });
+                    return;
+                }
+                await next();
+            });
+        }
 
         // GET /posts — filtro por userId + paginação page/pageSize com Link rel="next".
         app.MapGet("/posts", (HttpContext ctx, int? userId, int? page, int? pageSize) =>
