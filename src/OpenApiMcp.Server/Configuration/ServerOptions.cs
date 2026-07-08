@@ -7,6 +7,14 @@ public sealed class ServerOptions
     public string BaseUrl { get; set; } = "";
     public PolicyOptions Policy { get; set; } = new();
     public AuthOptions Auth { get; set; } = new();
+    public ResponseOptions Response { get; set; } = new();
+}
+
+/// <summary>Moldagem da resposta devolvida ao modelo (ver ResponseShaper).</summary>
+public sealed class ResponseOptions
+{
+    /// <summary>Teto do corpo em caracteres; acima disso trunca com marcador explícito.</summary>
+    public int MaxBodyChars { get; set; } = ResponseShaper.DefaultMaxBodyChars;
 }
 
 /// <summary>O policy gate: o que o agente pode chamar. Padrão seguro = só leitura.</summary>

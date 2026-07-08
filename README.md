@@ -42,7 +42,7 @@ Honest, incremental build. What runs today vs. what's next:
 | Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ integration-tested with the SDK's real client ([ADR 0002](docs/adr/0002-dual-transport.md)) |
 | Bundled synthetic demo API — the whole E2E flow runs offline | ✅ tested |
 | OAuth2 client-credentials — token acquired/cached server-side, never seen by the agent | ✅ tested ([ADR 0003](docs/adr/0003-oauth2-client-credentials.md)) |
-| Richer response shaping / pagination helpers | 🔜 next |
+| Response shaping — body size cap with explicit truncation marker · `Link rel="next"` → pagination hint | ✅ tested |
 | Screen recording (Loom) | 🔜 next |
 
 Every demo uses **synthetic / public data** and the README shows real HTTP status and error paths
@@ -152,6 +152,9 @@ default). `openApiPath` is resolved relative to the config file.
   "auth": {
     "type": "bearer",
     "value": "${API_TOKEN}"
+  },
+  "response": {
+    "maxBodyChars": 16000
   }
 }
 ```
@@ -161,6 +164,9 @@ default). `openApiPath` is resolved relative to the config file.
 - **`auth.type`** — `none` · `apiKey` (with `headerName`) · `bearer` · `oauth2`. Any credential field may
   reference an environment variable as `${VAR_NAME}` so secrets stay out of the config file and out of the
   agent.
+- **`response.maxBodyChars`** — cap on the body returned to the model (default 16000). Oversized bodies are
+  cut with an explicit `[truncated: showing N of M chars]` marker — never silently. When the upstream sends
+  a `Link rel="next"` header, the response ends with `[more results: <url>]` so the agent knows to paginate.
 - **`auth.type: "oauth2"`** (client-credentials) — add `tokenUrl`, `clientId`, `clientSecret` and optional
   `scope`. The server mints and caches the access token (expiry-aware, 30s skew) and attaches it as a
   Bearer header server-side; the model never sees the flow. Try it offline against the bundled demo:

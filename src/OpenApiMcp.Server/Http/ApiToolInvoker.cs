@@ -14,12 +14,14 @@ public sealed class ApiToolInvoker
     private readonly IHttpClientFactory _httpFactory;
     private readonly ServerOptions _options;
     private readonly IAuthApplier _auth;
+    private readonly ResponseShaper _shaper;
 
     public ApiToolInvoker(IHttpClientFactory httpFactory, ServerOptions options, IAuthApplier auth)
     {
         _httpFactory = httpFactory;
         _options = options;
         _auth = auth;
+        _shaper = new ResponseShaper(options.Response.MaxBodyChars);
     }
 
     public async Task<string> InvokeAsync(
@@ -65,7 +67,8 @@ public sealed class ApiToolInvoker
         var client = _httpFactory.CreateClient("api");
         using var response = await client.SendAsync(request, ct);
         var text = await response.Content.ReadAsStringAsync(ct);
-        return $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}\n{text}";
+        response.Headers.TryGetValues("Link", out var linkHeaders);
+        return _shaper.Shape((int)response.StatusCode, response.ReasonPhrase, text, linkHeaders);
     }
 
     static string ValueToString(JsonElement e) =>
