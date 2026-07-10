@@ -68,6 +68,8 @@ You will see, over MCP:
 3. `tools/call createPost {...}` is rejected — `Unknown or disallowed tool` — because the gate never
    exposed it.
 
+![Smoke run over MCP (offline demo): tools/list without createPost, the blocked mutation, and the real HTTP 200](docs/assets/policy-gate-demo.png)
+
 ### Run it fully offline (bundled synthetic API)
 
 No network? The repo bundles its own upstream — `OpenApiMcp.DemoApi`, a zero-dependency minimal API
@@ -102,6 +104,8 @@ Run the tests:
 ```bash
 dotnet test
 ```
+
+![dotnet test — 30 tests passing](docs/assets/tests-passing.png)
 
 ### Docker
 
