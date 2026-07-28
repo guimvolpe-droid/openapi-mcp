@@ -20,3 +20,8 @@ appsettings.*.local.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Artefatos: 3 destinos (doutrina do ecossistema)
+/descarte/
+/bkp/*
+!/bkp/LEIA-ME.md
