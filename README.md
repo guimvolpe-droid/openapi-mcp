@@ -4,10 +4,15 @@ Turns a REST API into MCP tools an agent can use safely. Auth, rate-limits, retr
 allowlist are handled by the server. Written in C# / .NET 8 on the official
 [`ModelContextProtocol`](https://github.com/modelcontextprotocol/csharp-sdk) SDK.
 
+In plain terms: the AI can read your data through your own endpoints. It cannot change or delete
+anything. And it never sees your credentials.
+
 Point it at an **OpenAPI / Swagger** document and it exposes each operation as a typed
 [Model Context Protocol](https://modelcontextprotocol.io) tool that Claude (or any MCP client) can call.
 The server works as a **security boundary** rather than a transparent proxy: mutating and out-of-scope
 calls are off by default, and credentials never reach the model.
+
+![Demo run: read calls return real data, the write call is blocked by the policy gate](docs/assets/policy-gate-demo.png)
 
 ## Why
 
@@ -38,17 +43,20 @@ What runs today and what comes next:
 | Policy gate: operation allowlist · mutating verbs off by default | ✅ working, unit-tested |
 | Resilient HTTP dispatch (retries / timeout / circuit-breaker) + path/query/header/body mapping | ✅ working |
 | Pluggable auth (API key · bearer) injected server-side, kept out of the agent | ✅ working |
-| Runs without ICU (`InvariantGlobalization`) · Dockerfile · GitHub Actions CI | ✅ |
-| Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ integration-tested with the SDK's real client ([ADR 0002](docs/adr/0002-dual-transport.md)) |
 | Bundled synthetic demo API, the whole E2E flow runs offline | ✅ tested |
 | OAuth2 client-credentials: token acquired/cached server-side, never seen by the agent | ✅ tested ([ADR 0003](docs/adr/0003-oauth2-client-credentials.md)) |
 | Response shaping: body size cap with explicit truncation marker · `Link rel="next"` → pagination hint | ✅ tested |
 | Screen recording (Loom) | 🔜 next |
+| Runs without ICU (`InvariantGlobalization`) · Dockerfile · GitHub Actions CI | ✅ |
+| Streamable HTTP transport (`OPENAPI_MCP_HTTP=1`, loopback-only, Bearer fail-closed) | ✅ integration-tested with the SDK's real client ([ADR 0002](docs/adr/0002-dual-transport.md)) |
 
 Every demo uses synthetic or public data. The README shows real HTTP status codes and error paths,
 including the cases where the call fails.
 
 ## Run it
+
+<details>
+<summary>Build, demo flows, Docker and client wiring (expand)</summary>
 
 Requires the .NET 8 SDK. Build and drive the full flow end to end against the bundled demo (which points
 at the public, read-only [JSONPlaceholder](https://jsonplaceholder.typicode.com) API):
@@ -68,7 +76,7 @@ You will see, over MCP:
 3. `tools/call createPost {...}` is rejected with `Unknown or disallowed tool`, because the gate never
    exposed it.
 
-![Smoke run over MCP (offline demo): tools/list without createPost, the blocked mutation, and the real HTTP 200](docs/assets/policy-gate-demo.png)
+That run is the screenshot at the top of this page.
 
 ### Run it fully offline (bundled synthetic API)
 
@@ -142,7 +150,12 @@ curl -sN -X POST http://127.0.0.1:8410/mcp \
 }
 ```
 
+</details>
+
 ## Configuration
+
+<details>
+<summary>Config file reference: policy, auth, response shaping (expand)</summary>
 
 The server reads a JSON config (env var `OPENAPI_MCP_CONFIG`, or the bundled `demo/config.json` by
 default). `openApiPath` is resolved relative to the config file.
@@ -184,6 +197,8 @@ default). `openApiPath` is resolved relative to the config file.
   # getPost → HTTP 200 (token minted silently, server-side). Run with demo/config.local.json instead
   # of the oauth config and the upstream answers HTTP 401, which is the failure path made visible.
   ```
+
+</details>
 
 ## Architecture
 
